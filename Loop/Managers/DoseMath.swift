@@ -290,11 +290,11 @@ extension Collection where Element: GlucoseValue {
             return nil
         }
 
-        // Choose either the minimum glucose or eventual glocse as the correction delta
+        // Choose either the minimum glucose or eventual glucose as the correction delta
         let minGlucoseTargets = correctionRange.quantityRange(at: min.startDate)
         let eventualGlucoseTargets = correctionRange.quantityRange(at: eventual.startDate)
 
-        // Treat the mininum glucose when both are below range
+        // Treat the minimum glucose when both are below range
         if min.quantity < minGlucoseTargets.lowerBound &&
             eventual.quantity < eventualGlucoseTargets.lowerBound
         {
