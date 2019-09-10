@@ -16,6 +16,19 @@ private enum InsulinCorrection {
     case aboveRange(min: GlucoseValue, correcting: GlucoseValue, minTarget: HKQuantity, units: Double)
     case entirelyBelowRange(correcting: GlucoseValue, minTarget: HKQuantity, units: Double)
     case suspend(min: GlucoseValue)
+    
+    func getTarget() -> HKQuantity? {
+        switch self {
+        case .aboveRange(min: _, correcting: _, minTarget: let target, units: _):
+            return target
+        case .entirelyBelowRange(correcting: _, minTarget: let target, units: _):
+            return target
+        case .inRange:
+            return nil
+        case .suspend:
+            return nil
+        }
+    }
 }
 
 
