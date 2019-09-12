@@ -41,6 +41,10 @@ public struct LoopSettings: Equatable {
     public let enableSMBAfterCarbs = false
     
     public let enableSMBAlways = false
+    
+    public let maxSMBMinutes = 30
+    
+    public let maxSMBUAMMinutes = 30
 
     /// The amount of time since a given date that data should be considered valid
     public let recencyInterval = TimeInterval(minutes: 15)

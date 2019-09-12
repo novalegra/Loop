@@ -19,6 +19,8 @@ struct PredictionInputEffect: OptionSet {
     static let retrospection    = PredictionInputEffect(rawValue: 1 << 3)
 
     static let all: PredictionInputEffect = [.carbs, .insulin, .momentum, .retrospection]
+    // used to calculate minIOBPredBG for SMBs
+    static let insulinOnly: PredictionInputEffect = [.insulin, .momentum]
 
     var localizedTitle: String? {
         switch self {
