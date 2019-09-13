@@ -91,8 +91,117 @@ extension InsulinCorrection {
             }
         }
     }
+    
+    /// Determines the microbolus needed to perform the correction if BGs are predicted
+    /// to be above range
+    /// - Parameters:
+    ///   - date: The date at which the super-microbolus (SMB) would apply, defaults to now
+    ///   - pendingInsulin: The number of units expected to be delivered, but not yet reflected in the correction
+    ///   - naiveEventualBG: The predicted eventual BG based on IOB
+    ///   - minIOBPredBG: The lowest predicted BG measurement after the insulin has peaked in a prediction that incorporates insulin and momentum effects
+    ///   - lastBolusTime: The start time of the most recently given bolus dose
+    ///   - maxBasalRate: The maximum basal rate to return
+    ///   - userSetMaxBolus: The maximum bolus to return
+    ///   - iob: The current IOB
+    ///   - cob: The current COB
+    ///   - sensitivity: The current insulin sensitivity
+    ///   - carbRatio: The current carb ratio
+    ///   - scheduledbasalRate: The current scheduled basal rate
+    ///   - maxSMBMinutes: The maximum minutes of basal insulin that can be given as a SMB
+    ///   - maxUAMSMBMinutes: The maximum minutes of basal insulin that can be given as a SMB when there has likely been an unannounced meal (UAM)
+    /// - Returns: The recommended temporary basal rate and SMB
+    fileprivate func asMicrobolus(
+        at date: Date = Date(),
+        pendingInsulin: Double,
+        naiveEventualBG: HKQuantity,
+        minIOBPredBG: HKQuantity,
+        lastBolusTime: Date?,
+        maxBasalRate: Double,
+        userSetMaxBolus: Double,
+        iob: Double,
+        cob: Double,
+        sensitivity: HKQuantity,
+        carbRatio: Double,
+        scheduledBasalRate: Double,
+        maxSMBMinutes: Double = 30,
+        maxUAMSMBMinutes: Double = 30
+        ) -> (TempBasalRecommendation, BolusRecommendation)? {
 
-    /// Determins the bolus needed to perform the correction
+        switch self {
+            case .aboveRange:
+                break
+            
+            default:
+                return nil
+        }
+
+        let insulinReq = self.units - pendingInsulin
+        let mealtimeInsulinReq = cob / carbRatio
+        var maxBolus:Double
+        // if the IOB is likely due to a meal, use "max_uam_smb_minutes"-worth,
+        // otherwise use "max_smb_minutes"-worth
+        if iob > mealtimeInsulinReq && iob > 0 {
+            maxBolus = min(userSetMaxBolus, scheduledBasalRate * maxUAMSMBMinutes / 60)
+        } else {
+            maxBolus = min(userSetMaxBolus, scheduledBasalRate * maxUAMSMBMinutes / 60)
+        }
+        
+        // bolus half of the required correction up to the max bolus, rounding down in 0.1 U increments
+        let microbolus = floor(min(insulinReq / 2, maxBolus) * 10) / 10
+    
+        // if there is insulin required but not enough for a microbolus, set a temp basal rate instead
+        if insulinReq > 0 && microbolus < 0.1 {
+            return nil
+        }
+        
+        let target = self.getTarget()
+        let unit = HKUnit.milligramsPerDeciliter
+        guard let smbTarget = target, let lastBolusTime = lastBolusTime else {
+            return nil
+        }
+
+        let worstCaseRequiredInsulin = (
+            smbTarget.doubleValue(for: unit) - (
+                max(0, naiveEventualBG.doubleValue(for: unit)) - max(0, minIOBPredBG.doubleValue(for: unit))
+            ) / 2
+        ) / sensitivity.doubleValue(for:unit)
+        
+        // the required duration must be between 0 and 60 minutes, inclusive
+        var requiredDuration = min(60, max(60 * worstCaseRequiredInsulin / scheduledBasalRate, 0))
+        var smbLowTemp:Double
+        
+        // if required duration is less than 30 minutes, set a non-zero low temp
+        if requiredDuration < 30 {
+            smbLowTemp = min(maxBasalRate, scheduledBasalRate * requiredDuration / 30)
+            requiredDuration = 30
+        } else {
+            smbLowTemp = 0
+        }
+        
+        let lastBolusAge = date.timeIntervalSince(lastBolusTime)
+        // continue with the current temp rate if there was a recent bolus
+        if lastBolusAge.minutes <= 3 {
+            return nil // TODO: figure out how to send signal to continue current temp
+        }
+        
+        if requiredDuration > 0 {
+            return (
+                TempBasalRecommendation(
+                    unitsPerHour: smbLowTemp,
+                    duration: requiredDuration
+                ),
+                BolusRecommendation(
+                    amount: microbolus,
+                    pendingInsulin: pendingInsulin,
+                    notice: bolusRecommendationNotice
+                )
+            )
+        } else {
+            return nil // if no zero-temp is required, set a high temp instead
+        }
+    }
+
+    /// Determines the bolus needed to perform the correction
     ///
     /// - Parameters:
     ///   - pendingInsulin: The number of units expected to be delivered, but not yet reflected in the correction
@@ -456,4 +565,81 @@ extension Collection where Element: GlucoseValue {
 
         return bolus
     }
+    
+    /// Recommends a supermicrobolus and a zero (or near-zero) temp to ensure safety
+    ///
+    /// Returns nil if microbolus cannot be delivered (last bolus was too recent, not predicted to be high, etc) and a temp basal/recommended bolus should instead be calculated
+    ///
+    /// - Parameters:
+    ///   - minIOBPredBG: The lowest predicted BG measurement after the insulin has peaked in a prediction that incorporates insulin and momentum effects
+    ///   - correctionRange: schedule of correction ranges
+    ///   - date: The date at which the super-microbolus (SMB) would apply, defaults to now
+    ///   - suspendThreshold: A glucose value causing a recommendation of no insulin if any prediction falls below
+    ///   - sensitivities: The schedule of insulin sensitivities
+    ///   - model: The insulin absorption model
+    ///   - pendingInsulin: The number of units expected to be delivered, but not yet reflected in the correction
+    ///   - carbRatios: The schedule of carb ratios
+    ///   - basalRates: The schedule of basal rates
+    ///   - iob: The current IOB
+    ///   - cob: The current COB
+    ///   - maxBasalRate: The maximum basal rate to return
+    ///   - maxBolus: The maximum bolus to return
+    ///   - lastBolus: The dose entry of the most recently given bolus dose
+    ///   - maxSMBMinutes: The maximum minutes of basal insulin that can be given as a SMB
+    ///   - maxUAMSMBMinutes: The maximum minutes of basal insulin that can be given as a SMB when there has likely been an unannounced meal (UAM)
+    /// - Returns: The recommended temporary basal rate and SMB
+    func recommendedSuperMicrobolus(
+        minIOBPredBG: HKQuantity,
+        to correctionRange: GlucoseRangeSchedule,
+        at date: Date = Date(),
+        suspendThreshold: HKQuantity?,
+        sensitivities: InsulinSensitivitySchedule,
+        model: InsulinModel,
+        pendingInsulin: Double,
+        carbRatios: CarbRatioSchedule,
+        basalRates: BasalRateSchedule,
+        iob: Double,
+        cob: Double,
+        maxBasalRate: Double,
+        maxBolus: Double,
+        lastBolus: DoseEntry?,
+        maxSMBMinutes: Double,
+        maxUAMSMBMinutes: Double
+        ) -> (TempBasalRecommendation, BolusRecommendation)? {
+        let sensitivity = sensitivities.quantity(at: date)
+        let correction = self.insulinCorrection(
+            to: correctionRange,
+            at: date,
+            suspendThreshold: suspendThreshold ?? correctionRange.quantityRange(at: date).lowerBound,
+            sensitivity: sensitivity,
+            model: model
+        )
+        
+        let carbRatio = carbRatios.value(at: date)
+        let scheduledBasalRate = basalRates.value(at: date)
+        
+        let unit = correctionRange.unit
+        let naiveEventualBG = HKQuantity(unit: unit, doubleValue: (self.first?.quantity.doubleValue(for: unit))! - iob * sensitivity.doubleValue(for: unit))
+        
+        
+        let recommendation = correction?.asMicrobolus(
+            at: date,
+            pendingInsulin: pendingInsulin,
+            naiveEventualBG: naiveEventualBG,
+            minIOBPredBG: minIOBPredBG,
+            lastBolusTime: lastBolus?.startDate,
+            maxBasalRate: maxBasalRate,
+            userSetMaxBolus: maxBolus,
+            iob: iob,
+            cob: cob,
+            sensitivity: sensitivity,
+            carbRatio: carbRatio,
+            scheduledBasalRate: scheduledBasalRate,
+            maxSMBMinutes: maxSMBMinutes,
+            maxUAMSMBMinutes: maxUAMSMBMinutes
+        )
+        
+        return recommendation
+    }
+
 }
