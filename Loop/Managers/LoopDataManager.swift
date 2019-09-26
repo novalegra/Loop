@@ -735,7 +735,7 @@ extension LoopDataManager {
         
         if insulinOnBoard == nil {
             updateGroup.enter()
-            doseStore.getInsulinOnBoardValues(start: Date()) { (result) in
+            doseStore.getInsulinOnBoardValues(start: Date() - TimeInterval(minutes: 5)) { (result) in
                 switch result {
                 case .failure:
                     self.insulinOnBoard = nil
@@ -1025,11 +1025,9 @@ extension LoopDataManager {
         }
         
         if enableSMB, let carbRatios = carbRatioScheduleApplyingOverrideHistory {
-            print("Attempting to calculate a SMB")
             let iobPredBGs = try predictGlucose(using: PredictionInputEffect.insulinOnly)
             let insulinPeak5MinIntervals = 18 // this could be customized if the InsulinModel protocol is updated to include peak time, which is currently not present because the Walsh model doesn't have a user-set peak
             let IOBPredBG = iobPredBGs[insulinPeak5MinIntervals...].map { $0.quantity }.min()
-            print("smbstate", IOBPredBG, insulinOnBoard?.value)
             
             if let minIOBPredBG = IOBPredBG, let iob = insulinOnBoard?.value {
                 let recommendation = predictedGlucose.recommendedSuperMicrobolus(
@@ -1058,10 +1056,7 @@ extension LoopDataManager {
                     
                     recommendedSMBTempBasal = (recommendation: tempBasal, date: startDate)
                     recommendedSMB = (recommendation: smb, date: startDate)
-                    
-                    print("SMB", recommendation)
-                } else {
-                    print("No SMB recommended, setting the normal way")
+
                 }
                 
                 return
