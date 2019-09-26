@@ -1133,6 +1133,46 @@ extension LoopDataManager {
             }
         }
     }
+    
+    /// *This method should only be called from the `dataAccessQueue`*
+    private func setMicrobolus(_ completion: @escaping (_ error: Error?) -> Void) {
+        dispatchPrecondition(condition: .onQueue(dataAccessQueue))
+        
+        guard let smb = self.recommendedSMB else {
+            completion(nil)
+            NSLog("No microbolus recommendation available")
+            return
+        }
+        
+        guard abs(smb.date.timeIntervalSinceNow) < TimeInterval(minutes: 5) else {
+            completion(LoopError.recommendationExpired(date: smb.date))
+            NSLog("setMicrobolus - recommendation too old")
+            return
+        }
+
+        if lastRequestedBolus != nil {
+            NSLog("setMicrobolus - lastRequestedBolus still in progress \(String(describing: lastRequestedBolus))")
+            completion(nil)
+            return
+        }
+
+        self.recommendedBolus = nil
+        self.recommendedSMB = nil
+        
+        delegate?.loopDataManager(self, didRecommendBolus: smb) { (result) in
+            self.dataAccessQueue.async {
+                switch result {
+                case .success(let bolus):
+                    NSLog("setMicrobolus - success: \(bolus)")
+                    self.recommendedBolus = nil
+                    self.lastSMBTime = Date()
+                    completion(nil)
+                case .failure(let error):
+                    completion(error)
+                }
+            }
+        }
+    }
 }
 
 

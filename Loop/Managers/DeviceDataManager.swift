@@ -612,6 +612,25 @@ extension DeviceDataManager: LoopDataManagerDelegate {
             }
         )
     }
+    
+    func loopDataManager(_ manager: LoopDataManager, didRecommendBolus bolus: (recommendation: BolusRecommendation, date: Date), completion: @escaping (_ result: Result<DoseEntry>) -> Void) {
+        
+        enactBolus(units: bolus.recommendation.amount) { (error) in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                let now = Date()
+                completion(.success(DoseEntry(
+                    type: .bolus,
+                    startDate: now,
+                    endDate: now,
+                    value: bolus.recommendation.amount,
+                    unit: .units
+                )))
+            }
+            
+        }
+    }
 }
 
 
