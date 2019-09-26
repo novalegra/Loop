@@ -668,6 +668,18 @@ extension LoopDataManager {
                         self.notify(forChange: .tempBasal)
                     }
                     
+                    self.setMicrobolus{ (error) -> Void in
+                        self.lastLoopError = error
+                        
+                        if let error = error {
+                            self.logger.error(error)
+                        } else {
+                            self.lastLoopCompleted = Date()
+                        }
+                        self.logger.default("SMB enacted")
+                        self.notify(forChange: .bolus)
+                    }
+                    
                     // Delay the notification until we know the result of the temp basal
                     return
                 } else {
@@ -1253,6 +1265,22 @@ extension LoopDataManager {
                 return nil
             }
             return loopDataManager.recommendedBolus
+        }
+        
+        var recommendedSMBTempBasal: (recommendation: TempBasalRecommendation, date: Date)? {
+            dispatchPrecondition(condition: .onQueue(loopDataManager.dataAccessQueue))
+            guard loopDataManager.lastRequestedBolus == nil else {
+                return nil
+            }
+            return loopDataManager.recommendedSMBTempBasal
+        }
+        
+        var recommendedSMB: (recommendation: BolusRecommendation, date: Date)? {
+            dispatchPrecondition(condition: .onQueue(loopDataManager.dataAccessQueue))
+            guard loopDataManager.lastRequestedBolus == nil else {
+                return nil
+            }
+            return loopDataManager.recommendedSMB
         }
         
         var retrospectiveGlucoseDiscrepancies: [GlucoseChange]? {
