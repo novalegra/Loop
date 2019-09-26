@@ -602,7 +602,7 @@ extension Collection where Element: GlucoseValue {
         cob: Double,
         maxBasalRate: Double,
         maxBolus: Double,
-        lastBolus: DoseEntry?,
+        lastBolusTime: Date?,
         maxSMBMinutes: Double,
         maxUAMSMBMinutes: Double
         ) -> (TempBasalRecommendation, BolusRecommendation)? {
@@ -627,7 +627,7 @@ extension Collection where Element: GlucoseValue {
             pendingInsulin: pendingInsulin,
             naiveEventualBG: naiveEventualBG,
             minIOBPredBG: minIOBPredBG,
-            lastBolusTime: lastBolus?.startDate,
+            lastBolusTime: lastBolusTime,
             maxBasalRate: maxBasalRate,
             userSetMaxBolus: maxBolus,
             iob: iob,

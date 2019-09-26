@@ -223,6 +223,8 @@ final class LoopDataManager {
     
     fileprivate var lastRequestedBolus: DoseEntry?
     
+    fileprivate var lastSMBTime: Date? = Date()
+    
     /// The last date at which a loop completed, from prediction to dose (if dosing is enabled)
     var lastLoopCompleted: Date? {
         get {
@@ -1044,7 +1046,7 @@ extension LoopDataManager {
                     cob: carbsOnBoard?.quantity.doubleValue(for: HKUnit.gram()) ?? 0,
                     maxBasalRate: maxBasal,
                     maxBolus: maxBolus,
-                    lastBolus: lastRequestedBolus,
+                    lastBolusTime: lastSMBTime,
                     maxSMBMinutes: Double(rawValue: Double.RawValue(settings.maxSMBMinutes)) ?? 30,
                     maxUAMSMBMinutes: settings.maxSMBUAMMinutes
                 )
@@ -1405,6 +1407,15 @@ protocol LoopDataManagerDelegate: class {
     ///   - completion: A closure called once on completion
     ///   - result: The enacted basal
     func loopDataManager(_ manager: LoopDataManager, didRecommendBasalChange basal: (recommendation: TempBasalRecommendation, date: Date), completion: @escaping (_ result: Result<DoseEntry>) -> Void) -> Void
+    
+    /// Informs the delegate that an immediate bolus is recommended
+    ///
+    /// - Parameters:
+    ///   - manager: The manager
+    ///   - bolus: The recommended bolus
+    ///   - completion: A closure called once on completion
+    ///   - result: The enacted bolus
+    func loopDataManager(_ manager: LoopDataManager, didRecommendBolus bolus: (recommendation: BolusRecommendation, date: Date), completion: @escaping (_ result: Result<DoseEntry>) -> Void) -> Void
     
     /// Asks the delegate to round a recommended basal rate to a supported rate
     ///
