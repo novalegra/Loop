@@ -123,6 +123,7 @@ extension InsulinCorrection {
         sensitivity: HKQuantity,
         carbRatio: Double,
         scheduledBasalRate: Double,
+        rateRounder: ((Double) -> Double)?,
         maxSMBMinutes: Double = 30,
         maxUAMSMBMinutes: Double = 30
         ) -> (TempBasalRecommendation, BolusRecommendation)? {
@@ -187,11 +188,11 @@ extension InsulinCorrection {
         if requiredDuration > 0 {
             return (
                 TempBasalRecommendation(
-                    unitsPerHour: smbLowTemp,
+                    unitsPerHour: rateRounder?(smbLowTemp) ?? smbLowTemp,
                     duration: requiredDuration
                 ),
                 BolusRecommendation(
-                    amount: microbolus,
+                    amount: microbolus, // this was already pre-rounded during computation
                     pendingInsulin: pendingInsulin,
                     notice: bolusRecommendationNotice
                 )
@@ -604,8 +605,11 @@ extension Collection where Element: GlucoseValue {
         maxBolus: Double,
         lastBolusTime: Date?,
         maxSMBMinutes: Double,
-        maxUAMSMBMinutes: Double
-        ) -> (TempBasalRecommendation, BolusRecommendation)? {
+        maxUAMSMBMinutes: Double,
+        rateRounder: ((Double) -> Double)? = nil,
+        isBasalRateScheduleOverrideActive: Bool = false,
+        continuationInterval: TimeInterval = .minutes(11)
+        ) -> (TempBasalRecommendation?, BolusRecommendation)? {
         let sensitivity = sensitivities.quantity(at: date)
         let correction = self.insulinCorrection(
             to: correctionRange,
@@ -635,6 +639,7 @@ extension Collection where Element: GlucoseValue {
             sensitivity: sensitivity,
             carbRatio: carbRatio,
             scheduledBasalRate: scheduledBasalRate,
+            rateRounder: rateRounder,
             maxSMBMinutes: maxSMBMinutes,
             maxUAMSMBMinutes: maxUAMSMBMinutes
         )

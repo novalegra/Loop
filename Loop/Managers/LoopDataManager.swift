@@ -1058,7 +1058,8 @@ extension LoopDataManager {
                     maxBolus: maxBolus,
                     lastBolusTime: lastSMBTime,
                     maxSMBMinutes: Double(rawValue: Double.RawValue(settings.maxSMBMinutes)) ?? 30,
-                    maxUAMSMBMinutes: settings.maxSMBUAMMinutes
+                    maxUAMSMBMinutes: settings.maxSMBUAMMinutes,
+                    rateRounder: rateRounder
                 )
                 
                 if let tempBasal = recommendation?.0, let smb = recommendation?.1 {
