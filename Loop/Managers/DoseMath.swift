@@ -126,7 +126,7 @@ extension InsulinCorrection {
         rateRounder: ((Double) -> Double)?,
         maxSMBMinutes: Double = 30,
         maxUAMSMBMinutes: Double = 30
-        ) -> (TempBasalRecommendation, BolusRecommendation)? {
+        ) -> (TempBasalRecommendation?, BolusRecommendation)? {
 
         switch self {
             case .aboveRange:
@@ -168,7 +168,7 @@ extension InsulinCorrection {
         ) / sensitivity.doubleValue(for:unit)
         
         // the required duration must be between 0 and 60 minutes, inclusive
-        var requiredDuration = min(60, max(60 * worstCaseRequiredInsulin / scheduledBasalRate, 0))
+        var requiredDuration = min(60, max(round(60 * worstCaseRequiredInsulin / scheduledBasalRate), 0))
         var smbLowTemp:Double
         
         // if required duration is less than 30 minutes, set a non-zero low temp
@@ -604,6 +604,7 @@ extension Collection where Element: GlucoseValue {
         maxBasalRate: Double,
         maxBolus: Double,
         lastBolusTime: Date?,
+        lastTempBasal: DoseEntry?,
         maxSMBMinutes: Double,
         maxUAMSMBMinutes: Double,
         rateRounder: ((Double) -> Double)? = nil,
@@ -643,6 +644,18 @@ extension Collection where Element: GlucoseValue {
             maxSMBMinutes: maxSMBMinutes,
             maxUAMSMBMinutes: maxUAMSMBMinutes
         )
+        
+        if let recommendation = recommendation {
+            let temp = recommendation.0?.ifNecessary(
+                at: date,
+                scheduledBasalRate: scheduledBasalRate,
+                lastTempBasal: lastTempBasal,
+                continuationInterval: continuationInterval,
+                scheduledBasalRateMatchesPump: !isBasalRateScheduleOverrideActive
+            )
+            let newRecommendation = (temp, recommendation.1)
+            return newRecommendation
+        }
         
         return recommendation
     }

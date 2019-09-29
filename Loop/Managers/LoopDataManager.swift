@@ -195,6 +195,8 @@ final class LoopDataManager {
         didSet {
             recommendedTempBasal = nil
             recommendedBolus = nil
+            recommendedSMBTempBasal = nil
+            recommendedSMB = nil
         }
     }
     
@@ -1057,6 +1059,7 @@ extension LoopDataManager {
                     maxBasalRate: maxBasal,
                     maxBolus: maxBolus,
                     lastBolusTime: lastSMBTime,
+                    lastTempBasal: lastTempBasal,
                     maxSMBMinutes: Double(rawValue: Double.RawValue(settings.maxSMBMinutes)) ?? 30,
                     maxUAMSMBMinutes: settings.maxSMBUAMMinutes,
                     rateRounder: rateRounder
@@ -1204,6 +1207,10 @@ protocol LoopState {
     var recommendedTempBasal: (recommendation: TempBasalRecommendation, date: Date)? { get }
     
     var recommendedBolus: (recommendation: BolusRecommendation, date: Date)? { get }
+    
+    var recommendedSMBTempBasal: (recommendation: TempBasalRecommendation, date: Date)? { get }
+    
+    var recommendedSMB: (recommendation: BolusRecommendation, date: Date)? { get }
     
     /// The difference in predicted vs actual glucose over a recent period
     var retrospectiveGlucoseDiscrepancies: [GlucoseChange]? { get }
