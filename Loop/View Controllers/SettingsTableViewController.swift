@@ -15,6 +15,8 @@ import LoopTestingKit
 
 
 final class SettingsTableViewController: UITableViewController {
+    
+    private(set) var loopDataManager: LoopDataManager!
 
     @IBOutlet var devicesSectionTitleView: UIView?
 
@@ -83,6 +85,7 @@ final class SettingsTableViewController: UITableViewController {
         case carbRatio
         case insulinSensitivity
         case overridePresets
+        case enableSMB
     }
 
     fileprivate enum ServiceRow: Int, CaseCountable {
@@ -303,6 +306,16 @@ final class SettingsTableViewController: UITableViewController {
                     .map { $0.symbol }
                     .joined(separator: " ")
                 configCell.detailTextLabel?.text = presetPreviewText
+                
+            case .enableSMB:
+                let switchCell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
+                
+                switchCell.switch?.isOn = dataManager.loopManager.settings.enableSMBWithCOB
+                switchCell.textLabel?.text = NSLocalizedString("Enable SMB with COB", comment: "The title text for the supermicrobolus setting with carbs on board")
+                
+                switchCell.switch?.addTarget(self, action: #selector(enableSMBWithCOBChanged(_:)), for: .valueChanged)
+                
+                return switchCell
             }
 
             configCell.accessoryType = .disclosureIndicator
@@ -561,6 +574,8 @@ final class SettingsTableViewController: UITableViewController {
                 vc.delegate = self
 
                 show(vc, sender: sender)
+            case .enableSMB:
+                break
             }
         case .loop:
             switch LoopRow(rawValue: indexPath.row)! {
@@ -668,6 +683,12 @@ final class SettingsTableViewController: UITableViewController {
 
     @objc private func dosingEnabledChanged(_ sender: UISwitch) {
         dataManager.loopManager.settings.dosingEnabled = sender.isOn
+    }
+    
+    @objc private func enableSMBWithCOBChanged(_ sender: UISwitch) {
+        dataManager.loopManager.settings.enableSMBWithCOB = sender.isOn
+        // loopDataManager.loop() TODO: would this be desireable behavior?
+        
     }
 }
 
