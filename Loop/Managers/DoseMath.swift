@@ -182,14 +182,21 @@ extension InsulinCorrection {
         let lastBolusAge = date.timeIntervalSince(lastBolusTime)
         // continue with the current temp rate if there was a recent bolus
         if lastBolusAge.minutes <= 3 {
-            return nil // TODO: figure out how to send signal to continue current temp
+            return (
+                nil,
+                BolusRecommendation(
+                    amount: 0,
+                    pendingInsulin: pendingInsulin,
+                    notice: bolusRecommendationNotice
+                )
+            )
         }
         
         if requiredDuration > 0 {
             return (
                 TempBasalRecommendation(
                     unitsPerHour: rateRounder?(smbLowTemp) ?? smbLowTemp,
-                    duration: requiredDuration
+                    duration: TimeInterval(minutes: requiredDuration) 
                 ),
                 BolusRecommendation(
                     amount: microbolus, // this was already pre-rounded during computation
