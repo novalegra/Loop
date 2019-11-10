@@ -1048,7 +1048,11 @@ extension LoopDataManager {
         if enableSMB, let carbRatios = carbRatioScheduleApplyingOverrideHistory {
             let iobPredBGs = try predictGlucose(using: PredictionInputEffect.insulinOnly)
             let insulinPeak5MinIntervals = 18 // this could be customized if the InsulinModel protocol is updated to include peak time, which is currently not present because the Walsh model doesn't have a user-set peak
-            let IOBPredBG = iobPredBGs[insulinPeak5MinIntervals...].map { $0.quantity }.min()
+            
+            var IOBPredBG: HKQuantity? = nil
+            if iobPredBGs.count > insulinPeak5MinIntervals {
+                IOBPredBG = iobPredBGs[insulinPeak5MinIntervals...].map { $0.quantity }.min()
+            }
             
             if let minIOBPredBG = IOBPredBG, let iob = insulinOnBoard?.value {
                 let recommendation = predictedGlucose.recommendedSuperMicrobolus(
