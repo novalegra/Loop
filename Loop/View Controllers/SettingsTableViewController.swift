@@ -299,7 +299,9 @@ final class SettingsTableViewController: UITableViewController {
                 configCell.detailTextLabel?.text = presetPreviewText
                 
             case .enableSMB:
-                let switchCell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
+                configCell.textLabel?.text = NSLocalizedString("SMB Preferences", comment: "The title text for the supermicrobolus settings")
+                }
+                /*let switchCell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
                 
                 switchCell.switch?.isOn = dataManager.loopManager.settings.enableSMBWithCOB
                 switchCell.textLabel?.text = NSLocalizedString("Enable SMB with COB", comment: "The title text for the supermicrobolus setting with carbs on board")
@@ -307,7 +309,8 @@ final class SettingsTableViewController: UITableViewController {
                 switchCell.switch?.addTarget(self, action: #selector(enableSMBWithCOBChanged(_:)), for: .valueChanged)
                 
                 return switchCell
-            }
+                 
+            }*/
 
             configCell.accessoryType = .disclosureIndicator
             return configCell
@@ -574,7 +577,12 @@ final class SettingsTableViewController: UITableViewController {
 
                 show(vc, sender: sender)
             case .enableSMB:
-                break
+                let vc = SMBViewController(enableSMBWithCOB: dataManager.loopManager.settings.enableSMBWithCOB, enableSMBAfterCarbs: dataManager.loopManager.settings.enableSMBAfterCarbs, enableSMBAlways: dataManager.loopManager.settings.enableSMBAlways)
+                vc.title = sender?.textLabel?.text
+                
+                vc.delegate = self
+                self.show(vc, sender: sender)
+                
             }
         case .loop:
             switch LoopRow(rawValue: indexPath.row)! {
@@ -878,6 +886,14 @@ extension SettingsTableViewController: OverridePresetTableViewControllerDelegate
         dataManager.loopManager.settings.overridePresets = vc.presets
 
         tableView.reloadRows(at: [[Section.configuration.rawValue, ConfigurationRow.overridePresets.rawValue]], with: .none)
+    }
+}
+
+extension SettingsTableViewController: SMBViewControllerDelegate {
+    func SMBViewControllerDidUpdatePresets (_ vc: SMBViewController) {
+        dataManager.loopManager.settings.enableSMBWithCOB = vc.enableSMBWithCOB
+        dataManager.loopManager.settings.enableSMBAfterCarbs = vc.enableSMBWithCarbs
+        dataManager.loopManager.settings.enableSMBAlways = vc.alwaysEnableSMB
     }
 }
 
