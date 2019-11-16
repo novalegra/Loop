@@ -245,6 +245,7 @@ extension DeviceDataManager {
                     completion(error)
                 }
             case .success(let dose):
+                dose.description = "Super-microbolus"
                 self.loopManager.bolusConfirmed(dose) {
                     completion(nil)
                 }
