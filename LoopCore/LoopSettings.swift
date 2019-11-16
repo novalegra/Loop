@@ -36,7 +36,7 @@ public struct LoopSettings: Equatable {
     /// The interval over which to aggregate changes in glucose for retrospective correction
     public let retrospectiveCorrectionGroupingInterval = TimeInterval(minutes: 30)
     
-    public var enableSMBWithCOB = true
+    public var enableSMBWithCOB = false
     
     public var enableSMBAfterCarbs = false
     
