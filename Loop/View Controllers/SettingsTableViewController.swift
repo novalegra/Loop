@@ -301,16 +301,6 @@ final class SettingsTableViewController: UITableViewController {
             case .enableSMB:
                 configCell.textLabel?.text = NSLocalizedString("SMB Preferences", comment: "The title text for the supermicrobolus settings")
                 }
-                /*let switchCell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
-                
-                switchCell.switch?.isOn = dataManager.loopManager.settings.enableSMBWithCOB
-                switchCell.textLabel?.text = NSLocalizedString("Enable SMB with COB", comment: "The title text for the supermicrobolus setting with carbs on board")
-                
-                switchCell.switch?.addTarget(self, action: #selector(enableSMBWithCOBChanged(_:)), for: .valueChanged)
-                
-                return switchCell
-                 
-            }*/
 
             configCell.accessoryType = .disclosureIndicator
             return configCell
@@ -577,7 +567,7 @@ final class SettingsTableViewController: UITableViewController {
 
                 show(vc, sender: sender)
             case .enableSMB:
-                let vc = SMBViewController(enableSMBWithCOB: dataManager.loopManager.settings.enableSMBWithCOB, enableSMBAfterCarbs: dataManager.loopManager.settings.enableSMBAfterCarbs, enableSMBAlways: dataManager.loopManager.settings.enableSMBAlways)
+                let vc = SMBTableViewController(enableSMBWithCOB: dataManager.loopManager.settings.enableSMBWithCOB, enableSMBAfterCarbs: dataManager.loopManager.settings.enableSMBAfterCarbs, enableSMBAlways: dataManager.loopManager.settings.enableSMBAlways)
                 vc.title = sender?.textLabel?.text
                 
                 vc.delegate = self
@@ -642,12 +632,6 @@ final class SettingsTableViewController: UITableViewController {
 
     @objc private func dosingEnabledChanged(_ sender: UISwitch) {
         dataManager.loopManager.settings.dosingEnabled = sender.isOn
-    }
-    
-    @objc private func enableSMBWithCOBChanged(_ sender: UISwitch) {
-        dataManager.loopManager.settings.enableSMBWithCOB = sender.isOn
-        // loopDataManager.loop() TODO: would this be desireable behavior?
-        
     }
 }
 
@@ -889,8 +873,8 @@ extension SettingsTableViewController: OverridePresetTableViewControllerDelegate
     }
 }
 
-extension SettingsTableViewController: SMBViewControllerDelegate {
-    func SMBViewControllerDidUpdatePresets (_ vc: SMBViewController) {
+extension SettingsTableViewController: SMBTableViewControllerDelegate {
+    func SMBTableViewControllerDidUpdatePresets (_ vc: SMBTableViewController) {
         dataManager.loopManager.settings.enableSMBWithCOB = vc.enableSMBWithCOB
         dataManager.loopManager.settings.enableSMBAfterCarbs = vc.enableSMBWithCarbs
         dataManager.loopManager.settings.enableSMBAlways = vc.alwaysEnableSMB

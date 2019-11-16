@@ -1,5 +1,5 @@
 //
-//  SMBViewController.swift
+//  SMBTableViewController.swift
 //  LoopKitUI
 //
 //  Created by Anna Quinlan on 11/13/19.
@@ -12,28 +12,28 @@ import LoopKit
 import LoopKitUI
 
 
-public protocol SMBViewControllerDelegate: AnyObject {
-    func SMBViewControllerDidUpdatePresets(_ vc: SMBViewController)
+public protocol SMBTableViewControllerDelegate: AnyObject {
+    func SMBTableViewControllerDidUpdatePresets(_ vc: SMBTableViewController)
 }
 
-public final class SMBViewController: UITableViewController {
+public final class SMBTableViewController: UITableViewController {
     
-    public weak var delegate: SMBViewControllerDelegate?
+    public weak var delegate: SMBTableViewControllerDelegate?
     
     public var enableSMBWithCOB: Bool {
         didSet {
-            delegate?.SMBViewControllerDidUpdatePresets(self)
+            delegate?.SMBTableViewControllerDidUpdatePresets(self)
         }
     }
     
     public var enableSMBWithCarbs: Bool {
         didSet {
-            delegate?.SMBViewControllerDidUpdatePresets(self)
+            delegate?.SMBTableViewControllerDidUpdatePresets(self)
         }
     }
     public var alwaysEnableSMB: Bool {
         didSet {
-            delegate?.SMBViewControllerDidUpdatePresets(self)
+            delegate?.SMBTableViewControllerDidUpdatePresets(self)
         }
     }
     
@@ -120,7 +120,7 @@ public final class SMBViewController: UITableViewController {
     }
     
     public override func viewWillDisappear(_ animated: Bool) {
-        delegate?.SMBViewControllerDidUpdatePresets(self)
+        delegate?.SMBTableViewControllerDidUpdatePresets(self)
         super.viewWillDisappear(animated)
     }
     
