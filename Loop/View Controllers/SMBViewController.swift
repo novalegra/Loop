@@ -37,23 +37,20 @@ public final class SMBViewController: UITableViewController {
         }
     }
     
-    fileprivate enum Row: Int, CaseIterable {
+    fileprivate enum Section: Int, CaseIterable {
         case cob
         case carbs
         case alwaysEnable
     }
     
-    private var rows: [Row] = Row.allCases
-    
-    
-    let labels = ["Enable SMB with COB", "Enable SMB after Carb Consumption", "Always Enable SMB"]
+    private var sections: [Section] = Section.allCases
     
     init(enableSMBWithCOB: Bool, enableSMBAfterCarbs: Bool, enableSMBAlways: Bool) {
         self.enableSMBWithCOB = enableSMBWithCOB
         self.enableSMBWithCarbs = enableSMBAfterCarbs
         self.alwaysEnableSMB = enableSMBAlways
         
-        super.init(style: .plain)
+        super.init(style: .grouped)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -63,23 +60,23 @@ public final class SMBViewController: UITableViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = NSLocalizedString("Super-Microbolus Presets", comment: "The title text for the super-microbolus settings screen")
+        title = NSLocalizedString("Super-Microbolus Settings", comment: "The title text for the super-microbolus settings screen")
         
-        
+        tableView.cellLayoutMarginsFollowReadableWidth = true
         tableView.register(SwitchTableViewCell.self, forCellReuseIdentifier: SwitchTableViewCell.className)
 
     }
     
     public override func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        return sections.count
     }
     
     public override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return rows.count
+        return 1
     }
     
     public override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        switch rows[indexPath.row] {
+        switch sections[indexPath.section] {
         case .cob:
             let switchCell = tableView.dequeueReusableCell(withIdentifier: SwitchTableViewCell.className, for: indexPath) as! SwitchTableViewCell
             
@@ -108,6 +105,17 @@ public final class SMBViewController: UITableViewController {
             switchCell.switch?.addTarget(self, action: #selector(alwaysEnableSMBChanged(_:)), for: .valueChanged)
             
             return switchCell
+        }
+    }
+    
+    public override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+        switch Section(rawValue: section)! {
+        case .cob:
+            return NSLocalizedString("Enables super-microbolus (SMB) when carbs on board (COB) is a positive value.", comment: "The description shown on the enable supermicrobolus with carbs on board switch.")
+        case .carbs:
+            return NSLocalizedString("Enables super-microbolus (SMB) for 6 hours after carbs, even with zero carbs on board (COB).", comment: "The description shown on the enable supermicrobolus with carbs switch.")
+        case .alwaysEnable:
+            return NSLocalizedString("Enables super-microbolus (SMB) to be always on. Please use this setting with caution.", comment: "The description shown on the always enable supermicrobolus switch.")
         }
     }
     
