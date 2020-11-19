@@ -1,8 +1,8 @@
 //
 //  OverrideIntentHandler.swift
-//  Loop Intent Extension
+//  Loop
 //
-//  Created by Anna Quinlan on 10/17/20.
+//  Created by Anna Quinlan on 11/19/20.
 //  Copyright © 2020 LoopKit Authors. All rights reserved.
 //
 
@@ -20,7 +20,7 @@ class OverrideIntentHandler: NSObject, EnableOverridePresetIntentHandling {
         return names
     }
     
-    @available(iOSApplicationExtension 14.0, watchOSApplicationExtension 7.0, *)
+    @available(iOS 14.0, *)
     func provideOverrideNameOptionsCollection(for intent: EnableOverridePresetIntent, with completion: @escaping (INObjectCollection<NSString>?, Error?) -> Void) {
         guard let presets = presetOptions else {
             completion(nil, nil)
@@ -61,5 +61,5 @@ class OverrideIntentHandler: NSObject, EnableOverridePresetIntentHandling {
         }
 
         completion(INStringResolutionResult.success(with: overrideName))
-    }    
+    }
 }

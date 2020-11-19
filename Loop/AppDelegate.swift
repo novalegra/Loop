@@ -113,6 +113,13 @@ final class AppDelegate: UIResponder, UIApplicationDelegate, DeviceOrientationCo
 
         return true
     }
+    
+    func application(_ application: UIApplication, handlerFor intent: INIntent) -> Any? {
+        if intent is EnableOverridePresetIntent {
+            return OverrideIntentHandler()
+        }
+        return self
+    }
 
     func applicationWillResignActive(_ application: UIApplication) {
         log.default(#function)

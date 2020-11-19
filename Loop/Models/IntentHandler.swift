@@ -1,8 +1,8 @@
 //
 //  IntentHandler.swift
-//  Loop Intent Extension
+//  Loop
 //
-//  Created by Anna Quinlan on 10/17/20.
+//  Created by Anna Quinlan on 11/19/20.
 //  Copyright © 2020 LoopKit Authors. All rights reserved.
 //
 
